@@ -135,6 +135,13 @@ export type Endpoints = {
     BeaconState,
     ExecutionOptimisticFinalizedAndVersionMeta
   >;
+  getHistoricalSummaries: Endpoint<
+    "GET",
+    EmptyArgs,
+    EmptyRequest,
+    ValueOf<typeof ssz.capella.HistoricalSummaries>,
+    EmptyMeta
+  >;
 };
 
 export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpoints> {
@@ -194,6 +201,16 @@ export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpo
       init: {
         // Default timeout is not sufficient to download state as JSON
         timeoutMs: 5 * 60 * 1000,
+      },
+    },
+    getHistoricalSummaries: {
+      url: "/eth/v1/debug/historical_summaries",
+      method: "GET",
+      req: EmptyRequestCodec,
+      resp: {
+        data: ssz.capella.HistoricalSummaries,
+        meta: EmptyMetaCodec,
+        onlySupport: WireFormat.ssz,
       },
     },
   };

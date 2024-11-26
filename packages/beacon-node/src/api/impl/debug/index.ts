@@ -1,7 +1,8 @@
 import {routes} from "@lodestar/api";
 import {ApplicationMethods} from "@lodestar/api/server";
 import {ExecutionStatus} from "@lodestar/fork-choice";
-import {ZERO_HASH_HEX} from "@lodestar/params";
+import {ForkSeq, ZERO_HASH_HEX} from "@lodestar/params";
+import {BeaconStateCapella} from "@lodestar/state-transition";
 import {BeaconState} from "@lodestar/types";
 import {isOptimisticBlock} from "../../../util/forkChoice.js";
 import {getStateSlotFromBytes} from "../../../util/multifork.js";
@@ -84,6 +85,19 @@ export function getDebugApi({
           finalized,
         },
       };
+    },
+    async getHistoricalSummaries() {
+      const {state} = await getStateResponseWithRegen(chain, "head");
+      let slot: number;
+      if (state instanceof Uint8Array) {
+        slot = getStateSlotFromBytes(state);
+      } else {
+        slot = state.slot;
+      }
+      if (config.getForkSeq(slot) < ForkSeq.capella) {
+        throw new Error("Historical summaries are not supported before Capella");
+      }
+      return {data: (state as BeaconStateCapella).historicalSummaries.serialize()};
     },
   };
 }
