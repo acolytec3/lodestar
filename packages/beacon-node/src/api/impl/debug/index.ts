@@ -86,7 +86,7 @@ export function getDebugApi({
         },
       };
     },
-    async getHistoricalSummaries() {
+    async getHistoricalSummaries(_, context) {
       const {state} = await getStateResponseWithRegen(chain, "head");
       let slot: number;
       if (state instanceof Uint8Array) {
@@ -97,7 +97,10 @@ export function getDebugApi({
       if (config.getForkSeq(slot) < ForkSeq.capella) {
         throw new Error("Historical summaries are not supported before Capella");
       }
-      return {data: (state as BeaconStateCapella).historicalSummaries.serialize()};
+      if (context?.returnBytes) {
+        return {data: (state as BeaconStateCapella).historicalSummaries.serialize()};
+      }
+      return {data: (state as BeaconStateCapella).historicalSummaries.toValue()};
     },
   };
 }
