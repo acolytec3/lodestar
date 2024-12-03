@@ -87,7 +87,7 @@ const HistoricalSummariesResponseType = new ContainerType(
   {jsonCase: "eth2"}
 );
 
-export type HistoricalSummariesList = ValueOf<typeof HistoricalSummariesResponseType>;
+export type HistoricalSummariesResponse = ValueOf<typeof HistoricalSummariesResponseType>;
 
 export type Endpoints = {
   /** Trigger to write a heapdump to disk at `dirpath`. May take > 1min */
@@ -234,7 +234,7 @@ export type Endpoints = {
     "GET",
     StateArgs,
     {params: {state_id: string}},
-    HistoricalSummariesList,
+    HistoricalSummariesResponse,
     EmptyMeta
   >;
 
