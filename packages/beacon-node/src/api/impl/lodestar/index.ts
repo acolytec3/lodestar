@@ -202,8 +202,8 @@ export function getLodestarApi({
         throw new Error("Historical summaries are not supported before Capella");
       }
 
-      const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
-      const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
+      const {gindex} = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
+      const proof = new Tree(stateView.node).getSingleProof(gindex);
 
       return {
         data: {
