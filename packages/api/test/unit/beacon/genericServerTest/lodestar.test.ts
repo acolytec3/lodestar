@@ -10,7 +10,7 @@ import {FastifyRoute} from "../../../../src/utils/server/index.js";
 import {WireFormat} from "../../../../src/utils/wireFormat.js";
 import {getMockApi, getTestServer} from "../../../utils/utils.js";
 
-describe("lodestar", () => {
+describe("beacon / lodestar", () => {
   describe("get HistoricalSummaries as json", () => {
     const mockApi = getMockApi<Endpoints>(getDefinitions(config));
     let baseUrl: string;
