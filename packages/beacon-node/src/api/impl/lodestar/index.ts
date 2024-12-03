@@ -5,7 +5,7 @@ import {ApplicationMethods} from "@lodestar/api/server";
 import {ChainForkConfig} from "@lodestar/config";
 import {Repository} from "@lodestar/db";
 import {ForkName, ForkSeq, SLOTS_PER_EPOCH} from "@lodestar/params";
-import {getLatestWeakSubjectivityCheckpointEpoch, loadState} from "@lodestar/state-transition";
+import {BeaconStateCapella, getLatestWeakSubjectivityCheckpointEpoch, loadState} from "@lodestar/state-transition";
 import {ssz} from "@lodestar/types";
 import {toHex, toRootHex} from "@lodestar/utils";
 import {BeaconChain} from "../../../chain/index.js";
@@ -203,16 +203,16 @@ export function getLodestarApi({
       }
       const fork = config.getForkName(slot) as Exclude<ForkName, "phase0" | "altair" | "bellatrix">;
 
-      const stateView =
-        state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone();
+      const stateView = (
+        state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone()
+      ) as BeaconStateCapella;
 
       const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
       const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
 
       return {
         data: {
-          // biome-ignore lint/suspicious/noExplicitAny: state is definitely Capella or later based on above check
-          HistoricalSummaries: (stateView as any).historicalSummaries.toValue(),
+          HistoricalSummaries: stateView.historicalSummaries.toValue(),
           proof: proof,
         },
       };
