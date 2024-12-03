@@ -85,6 +85,7 @@ const DebugChainHeadListType = ArrayOf(DebugChainHeadType);
 type ProtoNodeList = ValueOf<typeof ProtoNodeListType>;
 type DebugChainHeadList = ValueOf<typeof DebugChainHeadListType>;
 type ForkChoiceResponse = ValueOf<typeof ForkChoiceResponseType>;
+type HistoricalSummariesList = ValueOf<typeof HistoricalSummariesResponseType>;
 const HistoricalSummariesResponseType = new ContainerType(
   {
     HistoricalSummaries: ssz.capella.HistoricalSummaries,
@@ -141,13 +142,7 @@ export type Endpoints = {
     BeaconState,
     ExecutionOptimisticFinalizedAndVersionMeta
   >;
-  getHistoricalSummaries: Endpoint<
-    "GET",
-    StateArgs,
-    {params: {state_id: string}},
-    ValueOf<typeof HistoricalSummariesResponseType>,
-    EmptyMeta
-  >;
+  getHistoricalSummaries: Endpoint<"GET", StateArgs, {params: {state_id: string}}, HistoricalSummariesList, EmptyMeta>;
 };
 
 export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpoints> {

@@ -8,6 +8,7 @@ import {getStateSlotFromBytes} from "../../../util/multifork.js";
 import {getStateResponseWithRegen} from "../beacon/state/utils.js";
 import {ApiModules} from "../types.js";
 import {Tree} from "@chainsafe/persistent-merkle-tree";
+import {loadState} from "@lodestar/state-transition";
 
 export function getDebugApi({
   chain,
@@ -98,12 +99,16 @@ export function getDebugApi({
         throw new Error("Historical summaries are not supported before Capella");
       }
       const fork = config.getForkName(slot) as Exclude<ForkName, "phase0" | "altair" | "bellatrix">;
-      const stateView = state instanceof Uint8Array ? ssz[fork].BeaconState.deserializeToViewDU(state) : state;
+
+      const stateView =
+        state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone();
+
       const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
       const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
 
       return {
         data: {
+          // biome-ignore lint/suspicious/noExplicitAny: state is definitely Capella or later based on above check
           HistoricalSummaries: (stateView as any).historicalSummaries.toValue(),
           proof: proof,
         },
