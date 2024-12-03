@@ -228,6 +228,16 @@ export type Endpoints = {
     {count: number}
   >;
 
+  /** Returns historical summaries and proof for a given state ID */
+  getHistoricalSummaries: Endpoint<
+    // ⏎
+    "GET",
+    StateArgs,
+    {params: {state_id: string}},
+    HistoricalSummariesList,
+    EmptyMeta
+  >;
+
   /** Dump Discv5 Kad values */
   discv5GetKadValues: Endpoint<
     // ⏎
@@ -259,16 +269,6 @@ export type Endpoints = {
     EmptyArgs,
     EmptyRequest,
     {root: RootHex; slot: Slot}[],
-    EmptyMeta
-  >;
-
-  /** Returns historical summaries and proof for a given state ID */
-  getHistoricalSummaries: Endpoint<
-    // ⏎
-    "GET",
-    StateArgs,
-    {params: {state_id: string}},
-    HistoricalSummariesList,
     EmptyMeta
   >;
 };
@@ -389,6 +389,21 @@ export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpo
       },
       resp: JsonOnlyResponseCodec,
     },
+    getHistoricalSummaries: {
+      url: "/eth/v1/lodestar/historical_summaries/{state_id}",
+      method: "GET",
+      req: {
+        writeReq: ({stateId}) => ({params: {state_id: stateId.toString()}}),
+        parseReq: ({params}) => ({stateId: params.state_id}),
+        schema: {
+          params: {state_id: Schema.StringRequired},
+        },
+      },
+      resp: {
+        data: HistoricalSummariesResponseType,
+        meta: EmptyMetaCodec,
+      },
+    },
     discv5GetKadValues: {
       url: "/eth/v1/debug/discv5_kad_values",
       method: "GET",
@@ -410,21 +425,6 @@ export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpo
       method: "GET",
       req: EmptyRequestCodec,
       resp: JsonOnlyResponseCodec,
-    },
-    getHistoricalSummaries: {
-      url: "/eth/v1/lodestar/historical_summaries/{state_id}",
-      method: "GET",
-      req: {
-        writeReq: ({stateId}) => ({params: {state_id: stateId.toString()}}),
-        parseReq: ({params}) => ({stateId: params.state_id}),
-        schema: {
-          params: {state_id: Schema.StringRequired},
-        },
-      },
-      resp: {
-        data: HistoricalSummariesResponseType,
-        meta: EmptyMetaCodec,
-      },
     },
   };
 }
