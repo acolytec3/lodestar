@@ -32,7 +32,7 @@ describe("lodestar", () => {
     it("getHistoricalSummaries", async () => {
       mockApi.getHistoricalSummaries.mockResolvedValue({
         data: {
-          HistoricalSummaries: [],
+          historicalSummaries: [],
           proof: [],
         },
       });
@@ -45,8 +45,7 @@ describe("lodestar", () => {
       expect(res.ok).toBe(true);
       expect(res.wireFormat()).toBe(WireFormat.json);
       expect(res.json().data).toStrictEqual({
-        // biome-ignore lint/style/useNamingConvention: <explanation>
-        Historical_summaries: [],
+        historical_summaries: [],
         proof: [],
       });
     });
