@@ -1,14 +1,12 @@
 import {routes} from "@lodestar/api";
 import {ApplicationMethods} from "@lodestar/api/server";
 import {ExecutionStatus} from "@lodestar/fork-choice";
-import {ForkName, ForkSeq, ZERO_HASH_HEX} from "@lodestar/params";
+import {ZERO_HASH_HEX} from "@lodestar/params";
 import {BeaconState, ssz} from "@lodestar/types";
 import {isOptimisticBlock} from "../../../util/forkChoice.js";
 import {getStateSlotFromBytes} from "../../../util/multifork.js";
 import {getStateResponseWithRegen} from "../beacon/state/utils.js";
 import {ApiModules} from "../types.js";
-import {Tree} from "@chainsafe/persistent-merkle-tree";
-import {loadState} from "@lodestar/state-transition";
 
 export function getDebugApi({
   chain,
@@ -84,33 +82,6 @@ export function getDebugApi({
           version: config.getForkName(slot),
           executionOptimistic,
           finalized,
-        },
-      };
-    },
-    async getHistoricalSummaries({stateId}, _context) {
-      const {state} = await getStateResponseWithRegen(chain, stateId);
-      let slot: number;
-      if (state instanceof Uint8Array) {
-        slot = getStateSlotFromBytes(state);
-      } else {
-        slot = state.slot;
-      }
-      if (config.getForkSeq(slot) < ForkSeq.capella) {
-        throw new Error("Historical summaries are not supported before Capella");
-      }
-      const fork = config.getForkName(slot) as Exclude<ForkName, "phase0" | "altair" | "bellatrix">;
-
-      const stateView =
-        state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone();
-
-      const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
-      const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
-
-      return {
-        data: {
-          // biome-ignore lint/suspicious/noExplicitAny: state is definitely Capella or later based on above check
-          HistoricalSummaries: (stateView as any).historicalSummaries.toValue(),
-          proof: proof,
         },
       };
     },

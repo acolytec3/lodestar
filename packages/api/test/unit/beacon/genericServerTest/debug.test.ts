@@ -23,7 +23,7 @@ describe("beacon / debug", () => {
 
   // Get state by SSZ
 
-  describe.skip("get state in SSZ format", () => {
+  describe("get state in SSZ format", () => {
     const mockApi = getMockApi<Endpoints>(getDefinitions(config));
     let baseUrl: string;
     let server: FastifyInstance;

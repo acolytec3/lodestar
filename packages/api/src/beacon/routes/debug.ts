@@ -85,14 +85,7 @@ const DebugChainHeadListType = ArrayOf(DebugChainHeadType);
 type ProtoNodeList = ValueOf<typeof ProtoNodeListType>;
 type DebugChainHeadList = ValueOf<typeof DebugChainHeadListType>;
 type ForkChoiceResponse = ValueOf<typeof ForkChoiceResponseType>;
-type HistoricalSummariesList = ValueOf<typeof HistoricalSummariesResponseType>;
-const HistoricalSummariesResponseType = new ContainerType(
-  {
-    HistoricalSummaries: ssz.capella.HistoricalSummaries,
-    proof: ArrayOf(ssz.Bytes8),
-  },
-  {jsonCase: "eth2"}
-);
+
 export type Endpoints = {
   /**
    * Retrieves all possible chain heads (leaves of fork choice tree).
@@ -142,7 +135,6 @@ export type Endpoints = {
     BeaconState,
     ExecutionOptimisticFinalizedAndVersionMeta
   >;
-  getHistoricalSummaries: Endpoint<"GET", StateArgs, {params: {state_id: string}}, HistoricalSummariesList, EmptyMeta>;
 };
 
 export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpoints> {
@@ -202,21 +194,6 @@ export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpo
       init: {
         // Default timeout is not sufficient to download state as JSON
         timeoutMs: 5 * 60 * 1000,
-      },
-    },
-    getHistoricalSummaries: {
-      url: "/eth/v0/debug/historical_summaries/{state_id}",
-      method: "GET",
-      req: {
-        writeReq: ({stateId}) => ({params: {state_id: stateId.toString()}}),
-        parseReq: ({params}) => ({stateId: params.state_id}),
-        schema: {
-          params: {state_id: Schema.StringRequired},
-        },
-      },
-      resp: {
-        data: HistoricalSummariesResponseType,
-        meta: EmptyMetaCodec,
       },
     },
   };

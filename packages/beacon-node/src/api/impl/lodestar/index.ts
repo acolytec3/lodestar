@@ -4,8 +4,8 @@ import {routes} from "@lodestar/api";
 import {ApplicationMethods} from "@lodestar/api/server";
 import {ChainForkConfig} from "@lodestar/config";
 import {Repository} from "@lodestar/db";
-import {SLOTS_PER_EPOCH} from "@lodestar/params";
-import {getLatestWeakSubjectivityCheckpointEpoch} from "@lodestar/state-transition";
+import {ForkName, ForkSeq, SLOTS_PER_EPOCH} from "@lodestar/params";
+import {getLatestWeakSubjectivityCheckpointEpoch, loadState} from "@lodestar/state-transition";
 import {ssz} from "@lodestar/types";
 import {toHex, toRootHex} from "@lodestar/utils";
 import {BeaconChain} from "../../../chain/index.js";
@@ -14,6 +14,9 @@ import {IBeaconDb} from "../../../db/interface.js";
 import {GossipType} from "../../../network/index.js";
 import {profileNodeJS, writeHeapSnapshot} from "../../../util/profile.js";
 import {ApiModules} from "../types.js";
+import {Tree} from "@chainsafe/persistent-merkle-tree";
+import {getStateSlotFromBytes} from "../../../index.js";
+import {getStateResponseWithRegen} from "../beacon/state/utils.js";
 
 export function getLodestarApi({
   chain,
@@ -186,6 +189,33 @@ export function getLodestarApi({
 
     async dumpDbStateIndex() {
       return {data: await db.stateArchive.dumpRootIndexEntries()};
+    },
+    async getHistoricalSummaries({stateId}, _context) {
+      const {state} = await getStateResponseWithRegen(chain, stateId);
+      let slot: number;
+      if (state instanceof Uint8Array) {
+        slot = getStateSlotFromBytes(state);
+      } else {
+        slot = state.slot;
+      }
+      if (config.getForkSeq(slot) < ForkSeq.capella) {
+        throw new Error("Historical summaries are not supported before Capella");
+      }
+      const fork = config.getForkName(slot) as Exclude<ForkName, "phase0" | "altair" | "bellatrix">;
+
+      const stateView =
+        state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone();
+
+      const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
+      const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
+
+      return {
+        data: {
+          // biome-ignore lint/suspicious/noExplicitAny: state is definitely Capella or later based on above check
+          HistoricalSummaries: (stateView as any).historicalSummaries.toValue(),
+          proof: proof,
+        },
+      };
     },
   };
 }

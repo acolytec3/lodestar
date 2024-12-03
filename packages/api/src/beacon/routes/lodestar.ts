@@ -1,8 +1,10 @@
 import {ChainForkConfig} from "@lodestar/config";
-import {Epoch, RootHex, Slot} from "@lodestar/types";
+import {Epoch, RootHex, Slot, ssz} from "@lodestar/types";
 import {
+  ArrayOf,
   EmptyArgs,
   EmptyMeta,
+  EmptyMetaCodec,
   EmptyRequest,
   EmptyRequestCodec,
   EmptyResponseCodec,
@@ -11,6 +13,8 @@ import {
 } from "../../utils/codecs.js";
 import {Endpoint, RouteDefinitions, Schema} from "../../utils/index.js";
 import {FilterGetPeers, NodePeer, PeerDirection, PeerState} from "./node.js";
+import {ContainerType, ValueOf} from "@chainsafe/ssz";
+import {StateArgs} from "./beacon/state.js";
 
 // See /packages/api/src/routes/index.ts for reasoning and instructions to add new routes
 
@@ -74,6 +78,15 @@ export type LodestarNodePeer = NodePeer & {
 };
 
 export type LodestarThreadType = "main" | "network" | "discv5";
+
+type HistoricalSummariesList = ValueOf<typeof HistoricalSummariesResponseType>;
+const HistoricalSummariesResponseType = new ContainerType(
+  {
+    HistoricalSummaries: ssz.capella.HistoricalSummaries,
+    proof: ArrayOf(ssz.Bytes8),
+  },
+  {jsonCase: "eth2"}
+);
 
 export type Endpoints = {
   /** Trigger to write a heapdump to disk at `dirpath`. May take > 1min */
@@ -247,6 +260,9 @@ export type Endpoints = {
     {root: RootHex; slot: Slot}[],
     EmptyMeta
   >;
+
+  /** Returns historical summaries and proof for a given state ID */
+  getHistoricalSummaries: Endpoint<"GET", StateArgs, {params: {state_id: string}}, HistoricalSummariesList, EmptyMeta>;
 };
 
 export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpoints> {
@@ -386,6 +402,21 @@ export function getDefinitions(_config: ChainForkConfig): RouteDefinitions<Endpo
       method: "GET",
       req: EmptyRequestCodec,
       resp: JsonOnlyResponseCodec,
+    },
+    getHistoricalSummaries: {
+      url: "/eth/v0/debug/historical_summaries/{state_id}",
+      method: "GET",
+      req: {
+        writeReq: ({stateId}) => ({params: {state_id: stateId.toString()}}),
+        parseReq: ({params}) => ({stateId: params.state_id}),
+        schema: {
+          params: {state_id: Schema.StringRequired},
+        },
+      },
+      resp: {
+        data: HistoricalSummariesResponseType,
+        meta: EmptyMetaCodec,
+      },
     },
   };
 }

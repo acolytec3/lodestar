@@ -76,8 +76,4 @@ export const testData: GenericServerTestCases<Endpoints> = {
       meta: {executionOptimistic: true, finalized: false, version: ForkName.altair},
     },
   },
-  getHistoricalSummaries: {
-    args: {stateId: "head"},
-    res: {data: {HistoricalSummaries: [], proof: []}},
-  },
 };
