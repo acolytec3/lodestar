@@ -1,3 +1,4 @@
+import {ContainerType, ValueOf} from "@chainsafe/ssz";
 import {ChainForkConfig} from "@lodestar/config";
 import {Epoch, RootHex, Slot, ssz} from "@lodestar/types";
 import {
@@ -12,9 +13,8 @@ import {
   JsonOnlyResponseCodec,
 } from "../../utils/codecs.js";
 import {Endpoint, RouteDefinitions, Schema} from "../../utils/index.js";
-import {FilterGetPeers, NodePeer, PeerDirection, PeerState} from "./node.js";
-import {ContainerType, ValueOf} from "@chainsafe/ssz";
 import {StateArgs} from "./beacon/state.js";
+import {FilterGetPeers, NodePeer, PeerDirection, PeerState} from "./node.js";
 
 // See /packages/api/src/routes/index.ts for reasoning and instructions to add new routes
 
