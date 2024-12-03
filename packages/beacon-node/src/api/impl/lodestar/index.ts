@@ -5,14 +5,13 @@ import {routes} from "@lodestar/api";
 import {ApplicationMethods} from "@lodestar/api/server";
 import {ChainForkConfig} from "@lodestar/config";
 import {Repository} from "@lodestar/db";
-import {ForkName, ForkSeq, SLOTS_PER_EPOCH} from "@lodestar/params";
+import {ForkSeq, SLOTS_PER_EPOCH} from "@lodestar/params";
 import {BeaconStateCapella, getLatestWeakSubjectivityCheckpointEpoch, loadState} from "@lodestar/state-transition";
 import {ssz} from "@lodestar/types";
 import {toHex, toRootHex} from "@lodestar/utils";
 import {BeaconChain} from "../../../chain/index.js";
 import {QueuedStateRegenerator, RegenRequest} from "../../../chain/regen/index.js";
 import {IBeaconDb} from "../../../db/interface.js";
-import {getStateSlotFromBytes} from "../../../index.js";
 import {GossipType} from "../../../network/index.js";
 import {profileNodeJS, writeHeapSnapshot} from "../../../util/profile.js";
 import {getStateResponseWithRegen} from "../beacon/state/utils.js";
@@ -190,29 +189,25 @@ export function getLodestarApi({
     async dumpDbStateIndex() {
       return {data: await db.stateArchive.dumpRootIndexEntries()};
     },
-    async getHistoricalSummaries({stateId}, _context) {
+
+    async getHistoricalSummaries({stateId}) {
       const {state} = await getStateResponseWithRegen(chain, stateId);
-      let slot: number;
-      if (state instanceof Uint8Array) {
-        slot = getStateSlotFromBytes(state);
-      } else {
-        slot = state.slot;
-      }
-      if (config.getForkSeq(slot) < ForkSeq.capella) {
-        throw new Error("Historical summaries are not supported before Capella");
-      }
-      const fork = config.getForkName(slot) as Exclude<ForkName, "phase0" | "altair" | "bellatrix">;
 
       const stateView = (
         state instanceof Uint8Array ? loadState(config, chain.getHeadState(), state).state : state.clone()
       ) as BeaconStateCapella;
+
+      const fork = config.getForkName(stateView.slot);
+      if (ForkSeq[fork] < ForkSeq.capella) {
+        throw new Error("Historical summaries are not supported before Capella");
+      }
 
       const gindex = ssz[fork].BeaconState.getPathInfo(["historicalSummaries"]);
       const proof = new Tree(stateView.node).getSingleProof(gindex.gindex);
 
       return {
         data: {
-          HistoricalSummaries: stateView.historicalSummaries.toValue(),
+          historicalSummaries: stateView.historicalSummaries.toValue(),
           proof: proof,
         },
       };
